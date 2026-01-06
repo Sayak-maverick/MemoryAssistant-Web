@@ -1,0 +1,125 @@
+/**
+ * ItemCard.css - Styles for the ItemCard component
+ *
+ * CSS Classes match the Android ItemCard design!
+ * We're using the same colors and spacing.
+ */
+
+/* Main card container */
+.item-card {
+  display: flex;  /* Flexbox layout (like Row in Compose) */
+  align-items: center;  /* Vertically center items */
+  background-color: white;
+  border-radius: 12px;  /* Rounded corners (matching Android 12dp) */
+  padding: 16px;
+  margin: 8px 16px;  /* Space around cards */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);  /* Subtle shadow */
+  cursor: pointer;  /* Show pointer on hover */
+  transition: all 0.2s ease;  /* Smooth animations */
+}
+
+/* Hover effect - lift card slightly */
+.item-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);  /* Move up 2px */
+}
+
+/* Emoji icon circle */
+.item-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;  /* Circle (half of width/height) */
+  background-color: #E3F2FD;  /* Light blue (primaryContainer) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;  /* Don't shrink when card is small */
+  margin-right: 16px;  /* Space between icon and text */
+}
+
+.item-emoji {
+  font-size: 24px;
+}
+
+/* Content area (name, description, timestamp, labels) */
+.item-card-content {
+  flex: 1;  /* Take up remaining space */
+  min-width: 0;  /* Allow text to truncate properly */
+}
+
+/* Item name */
+.item-card-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 4px 0;
+  /* Truncate long text with "..." */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Item description */
+.item-card-description {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.7);  /* 70% opacity */
+  margin: 0 0 4px 0;
+  /* Limit to 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+/* Timestamp */
+.item-card-timestamp {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);  /* 50% opacity */
+  margin: 0 0 8px 0;
+}
+
+/* Labels container */
+.item-card-labels {
+  display: flex;
+  gap: 4px;  /* 4px space between labels */
+  flex-wrap: wrap;  /* Wrap to next line if needed */
+}
+
+/* Individual label chip */
+.label-chip {
+  display: inline-block;
+  background-color: #C8E6C9;  /* Light green (secondaryContainer) */
+  color: #1B5E20;  /* Dark green text */
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;  /* Rounded pill shape */
+  font-weight: 500;
+}
+
+/* Responsive design - smaller screens */
+@media (max-width: 600px) {
+  .item-card {
+    margin: 8px;
+    padding: 12px;
+  }
+
+  .item-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    margin-right: 12px;
+  }
+
+  .item-emoji {
+    font-size: 20px;
+  }
+
+  .item-card-name {
+    font-size: 16px;
+  }
+
+  .item-card-description {
+    font-size: 13px;
+  }
+}
