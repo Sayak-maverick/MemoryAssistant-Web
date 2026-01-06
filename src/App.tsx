@@ -3,11 +3,11 @@
  *
  * This is similar to MainActivity.kt in Android - it's the entry point.
  *
- * What's new in Step 3:
- * 1. Added authentication flow (login/logout)
- * 2. Show LoginPage when not authenticated
- * 3. Show Home with items when authenticated
- * 4. Use useEffect + onAuthStateChange to track login state
+ * What's new in Step 4:
+ * 1. Added IndexedDB for local storage
+ * 2. Items now persist across browser sessions
+ * 3. Data loads from local database
+ * 4. Automatic dummy data insertion on first load
  */
 
 import React, { useState, useEffect } from 'react';
@@ -15,6 +15,7 @@ import { Item } from './types/item.types';
 import ItemCard from './components/ItemCard/ItemCard';
 import LoginPage from './pages/LoginPage/LoginPage';
 import { onAuthStateChange, logOut, isUserLoggedIn } from './services/auth.service';
+import { getAllItems, insertDummyData } from './database/db';
 import './App.css';
 
 /**
@@ -108,15 +109,63 @@ function App() {
 /**
  * HomeScreen - The main screen showing all items
  *
- * This is extracted from the original App component
- * Now it takes onLogout as a prop
+ * NOW USING INDEXEDDB!
+ * - Items are loaded from the browser's local database
+ * - Data persists across browser sessions
+ * - Works offline
  */
 function HomeScreen({ onLogout }: { onLogout: () => void }) {
   /**
-   * Get dummy items (hardcoded data)
-   * Later in Step 4, this will come from IndexedDB
+   * State for storing items from database
+   *
+   * useState - React hook to manage state
+   * Initially empty array, will be populated from database
    */
-  const items = getDummyItems();
+  const [items, setItems] = useState<Item[]>([]);
+
+  /**
+   * State for loading indicator
+   */
+  const [isLoading, setIsLoading] = useState(true);
+
+  /**
+   * Load items from IndexedDB on component mount
+   *
+   * useEffect - runs when component first loads
+   * Similar to LaunchedEffect in Jetpack Compose
+   */
+  useEffect(() => {
+    /**
+     * Async function to load items
+     *
+     * We need async/await because database operations are asynchronous
+     */
+    async function loadItems() {
+      try {
+        // Get all items from IndexedDB
+        const itemsFromDB = await getAllItems();
+
+        // If database is empty, insert dummy data
+        if (itemsFromDB.length === 0) {
+          await insertDummyData();
+          // Reload items after inserting dummy data
+          const newItems = await getAllItems();
+          setItems(newItems);
+        } else {
+          // Use existing items
+          setItems(itemsFromDB);
+        }
+      } catch (error) {
+        console.error('Error loading items:', error);
+      } finally {
+        // Stop loading indicator
+        setIsLoading(false);
+      }
+    }
+
+    // Call the async function
+    loadItems();
+  }, []); // Empty array = run only once on mount
 
   return (
     <div className="App">
@@ -130,88 +179,39 @@ function HomeScreen({ onLogout }: { onLogout: () => void }) {
 
       {/* Main content area */}
       <main className="App-main">
-        {items.map((item) => (
-          <ItemCard
-            key={item.id}
-            item={item}
-            onClick={() => {
-              console.log('Clicked item:', item.name);
-            }}
-          />
-        ))}
+        {isLoading ? (
+          // Show loading message
+          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+            Loading items...
+          </div>
+        ) : items.length === 0 ? (
+          // Show empty state
+          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+            No items yet. Add your first item!
+          </div>
+        ) : (
+          // Show items
+          items.map((item) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              onClick={() => {
+                console.log('Clicked item:', item.name);
+              }}
+            />
+          ))
+        )}
       </main>
     </div>
   );
 }
 
 /**
- * getDummyItems - Returns hardcoded sample items
+ * NOTE: getDummyItems() has been removed!
  *
- * This matches the Android getDummyItems() function exactly!
- * Same data, same structure, same timestamps.
+ * We now use IndexedDB with insertDummyData() from db.ts
+ * The data is stored in the browser's database and persists across sessions
  */
-function getDummyItems(): Item[] {
-  const now = Date.now();
-
-  return [
-    {
-      id: '1',
-      name: 'Car Keys',
-      description: 'Toyota keys with red keychain',
-      createdAt: now - 3600000,  // 1 hour ago
-      labels: ['important', 'daily']
-    },
-    {
-      id: '2',
-      name: 'Wallet',
-      description: 'Brown leather wallet with credit cards',
-      createdAt: now - 7200000,  // 2 hours ago
-      labels: ['important']
-    },
-    {
-      id: '3',
-      name: 'Reading Glasses',
-      description: 'Black frame reading glasses',
-      createdAt: now - 86400000,  // 1 day ago
-      labels: ['daily']
-    },
-    {
-      id: '4',
-      name: 'Phone Charger',
-      description: 'USB-C white charger cable',
-      createdAt: now - 172800000,  // 2 days ago
-      labels: []
-    },
-    {
-      id: '5',
-      name: 'Headphones',
-      description: 'Sony wireless headphones',
-      createdAt: now - 259200000,  // 3 days ago
-      labels: ['electronics']
-    },
-    {
-      id: '6',
-      name: 'House Keys',
-      description: 'Spare keys with blue keychain',
-      createdAt: now - 604800000,  // 1 week ago
-      labels: ['important', 'backup']
-    },
-    {
-      id: '7',
-      name: 'Work Badge',
-      description: 'Office access card',
-      createdAt: now - 1209600000,  // 2 weeks ago
-      labels: ['work', 'important']
-    },
-    {
-      id: '8',
-      name: 'Backpack',
-      description: 'Black Nike backpack',
-      createdAt: now - 1814400000,  // 3 weeks ago
-      labels: []
-    }
-  ];
-}
 
 // Export the component so index.tsx can use it
 export default App;
