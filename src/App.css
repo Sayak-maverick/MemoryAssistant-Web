@@ -29,13 +29,34 @@
   position: sticky;  /* Stick to top when scrolling */
   top: 0;
   z-index: 100;  /* Stay above other content */
+  display: flex;  /* Flexbox for title + logout button */
+  align-items: center;  /* Vertically center items */
+  justify-content: space-between;  /* Space between title and button */
 }
 
 .App-header-title {
   margin: 0;
   font-size: 20px;
   font-weight: bold;
+  flex: 1;  /* Take up available space */
   text-align: center;
+}
+
+/* Logout button */
+.logout-button {
+  background: rgba(255, 255, 255, 0.2);  /* Semi-transparent white */
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.3);  /* Slightly more opaque on hover */
 }
 
 /* Main content area - contains the list */

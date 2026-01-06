@@ -1,0 +1,160 @@
+/**
+ * LoginPage.css - Styles for the LoginPage component
+ *
+ * This matches the Material Design 3 styling from the Android version.
+ * Using the same color scheme and spacing.
+ */
+
+/* Page container - centers the login form */
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  padding: 20px;
+}
+
+/* Login form container */
+.login-container {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Title */
+.login-title {
+  font-size: 32px;
+  font-weight: bold;
+  color: #2196F3; /* Primary blue */
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+/* Subtitle */
+.login-subtitle {
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0 0 32px 0;
+  text-align: center;
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Form group (label + input) */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Label */
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Input field */
+.form-group input {
+  padding: 12px 16px;
+  border: 2px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+/* Input focus state */
+.form-group input:focus {
+  border-color: #2196F3; /* Primary blue */
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+/* Disabled input */
+.form-group input:disabled {
+  background-color: #F5F5F5;
+  cursor: not-allowed;
+}
+
+/* Error message */
+.error-message {
+  background-color: #FFEBEE; /* Light red */
+  color: #C62828; /* Dark red */
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  border-left: 4px solid #C62828;
+}
+
+/* Login button */
+.login-button {
+  background-color: #2196F3; /* Primary blue */
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+/* Button hover state */
+.login-button:hover:not(:disabled) {
+  background-color: #1976D2; /* Darker blue */
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+}
+
+/* Button disabled state */
+.login-button:disabled {
+  background-color: #BDBDBD; /* Gray */
+  cursor: not-allowed;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  display: inline-block;
+}
+
+/* Toggle mode button */
+.toggle-mode-button {
+  background: none;
+  border: none;
+  color: #2196F3; /* Primary blue */
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 16px;
+  padding: 8px;
+  transition: color 0.2s ease;
+}
+
+/* Toggle button hover */
+.toggle-mode-button:hover {
+  color: #1976D2; /* Darker blue */
+  text-decoration: underline;
+}
+
+/* Responsive design - smaller screens */
+@media (max-width: 600px) {
+  .login-container {
+    padding: 24px;
+  }
+
+  .login-title {
+    font-size: 28px;
+  }
+
+  .login-subtitle {
+    font-size: 14px;
+  }
+}

@@ -2,26 +2,116 @@
  * App.tsx - The root component of our React application
  *
  * This is similar to MainActivity.kt in Android - it's the entry point.
- * Now showing a list of items instead of Hello World!
  *
- * What's new in Step 2:
- * 1. Import Item type and ItemCard component
- * 2. Create dummy data (like getDummyItems() in Android)
- * 3. Use map() to render a list of ItemCards
- * 4. Add a header bar (like TopAppBar in Android)
+ * What's new in Step 3:
+ * 1. Added authentication flow (login/logout)
+ * 2. Show LoginPage when not authenticated
+ * 3. Show Home with items when authenticated
+ * 4. Use useEffect + onAuthStateChange to track login state
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Item } from './types/item.types';
 import ItemCard from './components/ItemCard/ItemCard';
+import LoginPage from './pages/LoginPage/LoginPage';
+import { onAuthStateChange, logOut, isUserLoggedIn } from './services/auth.service';
 import './App.css';
 
 /**
- * App Component - Now shows a list of items
+ * App Component - Main app with authentication
  *
- * @returns JSX element with item list
+ * This manages the authentication flow:
+ * - Shows LoginPage when user is not logged in
+ * - Shows Home screen when user is logged in
+ *
+ * Similar to AuthenticationFlow in MainActivity.kt
  */
 function App() {
+  /**
+   * STATE: Track if user is logged in
+   *
+   * useState - React hook to manage state
+   * Initialize with current auth state from Firebase
+   */
+  const [isLoggedIn, setIsLoggedIn] = useState(isUserLoggedIn());
+
+  /**
+   * useEffect - React hook for side effects
+   *
+   * This is like a "lifecycle method" - runs when component mounts.
+   *
+   * What this does:
+   * 1. Subscribe to auth state changes (login/logout events)
+   * 2. Update isLoggedIn when auth state changes
+   * 3. Cleanup when component unmounts
+   *
+   * Similar to LaunchedEffect in Jetpack Compose
+   */
+  useEffect(() => {
+    /**
+     * Listen for auth state changes
+     *
+     * onAuthStateChange calls our callback whenever:
+     * - User logs in
+     * - User logs out
+     * - Component first loads (to check existing session)
+     */
+    const unsubscribe = onAuthStateChange((user) => {
+      // user is not null if logged in, null if logged out
+      setIsLoggedIn(user !== null);
+    });
+
+    /**
+     * Cleanup function
+     *
+     * When component unmounts, stop listening to auth changes
+     * This prevents memory leaks
+     */
+    return () => unsubscribe();
+  }, []); // Empty array = run only once on mount
+
+  /**
+   * Handle logout
+   */
+  const handleLogout = async () => {
+    try {
+      await logOut();
+      // isLoggedIn will be updated by onAuthStateChange
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  /**
+   * CONDITIONAL RENDERING
+   *
+   * Show different screens based on login state
+   * Similar to if/else in AuthenticationFlow (Android)
+   */
+  if (!isLoggedIn) {
+    // Not logged in - show login page
+    return (
+      <LoginPage
+        onLoginSuccess={() => {
+          // onAuthStateChange will handle updating isLoggedIn
+          // but we can also update it here for immediate feedback
+          setIsLoggedIn(true);
+        }}
+      />
+    );
+  }
+
+  // Logged in - show home screen with items
+  return <HomeScreen onLogout={handleLogout} />;
+}
+
+/**
+ * HomeScreen - The main screen showing all items
+ *
+ * This is extracted from the original App component
+ * Now it takes onLogout as a prop
+ */
+function HomeScreen({ onLogout }: { onLogout: () => void }) {
   /**
    * Get dummy items (hardcoded data)
    * Later in Step 4, this will come from IndexedDB
@@ -30,29 +120,21 @@ function App() {
 
   return (
     <div className="App">
-      {/* Header bar (like TopAppBar in Android) */}
+      {/* Header bar with logout button */}
       <header className="App-header">
         <h1 className="App-header-title">Memory Assistant</h1>
+        <button onClick={onLogout} className="logout-button">
+          Logout
+        </button>
       </header>
 
       {/* Main content area */}
       <main className="App-main">
-        {/**
-         * Render list of items using map()
-         *
-         * map() is like items() in LazyColumn (Android)
-         * For each item in the array, create an ItemCard
-         *
-         * key={item.id} - React needs unique keys for list items
-         * This helps React efficiently update the list
-         */}
         {items.map((item) => (
           <ItemCard
-            key={item.id}  // Unique key for React
+            key={item.id}
             item={item}
             onClick={() => {
-              // TODO: Navigate to item detail page
-              // For now, just log to console
               console.log('Clicked item:', item.name);
             }}
           />
