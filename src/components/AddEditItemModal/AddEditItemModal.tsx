@@ -40,6 +40,8 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [labels, setLabels] = useState('');  // Comma-separated string
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);  // Image data URL
+  const [imageFile, setImageFile] = useState<File | null>(null);  // Selected file
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -59,6 +61,7 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
           setName(item.name);
           setDescription(item.description || '');
           setLabels(item.labels.join(', '));  // Convert array to string
+          setImageUrl(item.imageUrl);
         }
       });
     } else if (isOpen && !itemId) {
@@ -66,8 +69,27 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
       setName('');
       setDescription('');
       setLabels('');
+      setImageUrl(undefined);
+      setImageFile(null);
     }
   }, [isOpen, itemId]);
+
+  /**
+   * Handle image file selection
+   */
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+
+      // Convert to data URL for preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   /**
    * Handle form submission
@@ -100,6 +122,7 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
             name: name.trim(),
             description: description.trim() || undefined,
             labels: labelsList,
+            imageUrl: imageUrl,  // Include image
           };
           await updateItem(updatedItem);
         }
@@ -113,6 +136,7 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
           description: description.trim() || undefined,
           createdAt: Date.now(),
           labels: labelsList,
+          imageUrl: imageUrl,  // Include image
         };
         await addItem(newItem);
       }
@@ -208,6 +232,35 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                 disabled={isLoading}
               />
               <small>Separate multiple labels with commas</small>
+            </div>
+
+            {/* Image upload */}
+            <div className="form-group">
+              <label htmlFor="image">Photo (optional)</label>
+              <input
+                type="file"
+                id="image"
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={isLoading}
+                className="file-input"
+              />
+              {imageUrl && (
+                <div className="image-preview">
+                  <img src={imageUrl} alt="Preview" />
+                  <button
+                    type="button"
+                    className="remove-image-button"
+                    onClick={() => {
+                      setImageUrl(undefined);
+                      setImageFile(null);
+                    }}
+                    disabled={isLoading}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Buttons */}

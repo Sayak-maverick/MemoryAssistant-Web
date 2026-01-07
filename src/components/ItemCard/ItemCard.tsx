@@ -42,10 +42,16 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onClick }) => {
 
   return (
     <div className="item-card" onClick={onClick}>
-      {/* Icon/Emoji Circle */}
-      <div className="item-card-icon">
-        <span className="item-emoji">{getEmojiForItem(item.name)}</span>
-      </div>
+      {/* Icon/Emoji Circle OR Image */}
+      {item.imageUrl ? (
+        <div className="item-card-image">
+          <img src={item.imageUrl} alt={item.name} />
+        </div>
+      ) : (
+        <div className="item-card-icon">
+          <span className="item-emoji">{getEmojiForItem(item.name)}</span>
+        </div>
+      )}
 
       {/* Content */}
       <div className="item-card-content">

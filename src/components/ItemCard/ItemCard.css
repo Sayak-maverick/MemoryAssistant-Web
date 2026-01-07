@@ -24,6 +24,23 @@
   transform: translateY(-2px);  /* Move up 2px */
 }
 
+/* Image thumbnail */
+.item-card-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;  /* Slightly rounded corners for images */
+  overflow: hidden;  /* Clip image to border radius */
+  flex-shrink: 0;  /* Don't shrink when card is small */
+  margin-right: 16px;  /* Space between image and text */
+  background-color: #F5F5F5;  /* Light gray background while loading */
+}
+
+.item-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;  /* Cover the entire area, crop if needed */
+}
+
 /* Emoji icon circle */
 .item-card-icon {
   width: 48px;
@@ -102,6 +119,12 @@
   .item-card {
     margin: 8px;
     padding: 12px;
+  }
+
+  .item-card-image {
+    width: 40px;
+    height: 40px;
+    margin-right: 12px;
   }
 
   .item-card-icon {
