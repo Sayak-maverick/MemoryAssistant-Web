@@ -14,6 +14,7 @@ import React, { useState, useEffect } from 'react';
 import { Item } from './types/item.types';
 import ItemCard from './components/ItemCard/ItemCard';
 import LoginPage from './pages/LoginPage/LoginPage';
+import AddEditItemModal from './components/AddEditItemModal/AddEditItemModal';
 import { onAuthStateChange, logOut, isUserLoggedIn } from './services/auth.service';
 import { getAllItems, insertDummyData } from './database/db';
 import './App.css';
@@ -129,6 +130,15 @@ function HomeScreen({ onLogout }: { onLogout: () => void }) {
   const [isLoading, setIsLoading] = useState(true);
 
   /**
+   * State for Add/Edit modal
+   *
+   * null = modal closed
+   * "add" = add new item
+   * itemId = edit that item
+   */
+  const [modalState, setModalState] = useState<string | null>(null);
+
+  /**
    * Load items from IndexedDB on component mount
    *
    * useEffect - runs when component first loads
@@ -167,42 +177,73 @@ function HomeScreen({ onLogout }: { onLogout: () => void }) {
     loadItems();
   }, []); // Empty array = run only once on mount
 
-  return (
-    <div className="App">
-      {/* Header bar with logout button */}
-      <header className="App-header">
-        <h1 className="App-header-title">Memory Assistant</h1>
-        <button onClick={onLogout} className="logout-button">
-          Logout
-        </button>
-      </header>
+  /**
+   * Refresh items from database
+   */
+  const refreshItems = async () => {
+    const itemsFromDB = await getAllItems();
+    setItems(itemsFromDB);
+  };
 
-      {/* Main content area */}
-      <main className="App-main">
-        {isLoading ? (
-          // Show loading message
-          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-            Loading items...
-          </div>
-        ) : items.length === 0 ? (
-          // Show empty state
-          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-            No items yet. Add your first item!
-          </div>
-        ) : (
-          // Show items
-          items.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              onClick={() => {
-                console.log('Clicked item:', item.name);
-              }}
-            />
-          ))
-        )}
-      </main>
-    </div>
+  return (
+    <>
+      <div className="App">
+        {/* Header bar with logout button */}
+        <header className="App-header">
+          <h1 className="App-header-title">Memory Assistant</h1>
+          <button onClick={onLogout} className="logout-button">
+            Logout
+          </button>
+        </header>
+
+        {/* Main content area */}
+        <main className="App-main">
+          {isLoading ? (
+            // Show loading message
+            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+              Loading items...
+            </div>
+          ) : items.length === 0 ? (
+            // Show empty state
+            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+              No items yet. Add your first item!
+            </div>
+          ) : (
+            // Show items
+            items.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onClick={() => {
+                  // Open edit modal
+                  setModalState(item.id);
+                }}
+              />
+            ))
+          )}
+        </main>
+
+        {/* Floating Action Button */}
+        <button
+          className="fab"
+          onClick={() => setModalState('add')}
+          title="Add Item"
+        >
+          +
+        </button>
+      </div>
+
+      {/* Add/Edit Modal */}
+      <AddEditItemModal
+        isOpen={modalState !== null}
+        itemId={modalState === 'add' ? undefined : modalState || undefined}
+        onClose={() => setModalState(null)}
+        onSaved={() => {
+          refreshItems();
+          setModalState(null);
+        }}
+      />
+    </>
   );
 }
 
