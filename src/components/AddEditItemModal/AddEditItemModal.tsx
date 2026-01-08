@@ -10,10 +10,11 @@
  * - Delete confirmation
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Item } from '../../types/item.types';
 import { addItem, updateItem, deleteItem, getItemById } from '../../database/db';
 import { detectLabels, suggestItemName } from '../../services/visionService';
+import { AudioRecorder, transcribeAudio } from '../../services/audioService';
 import './AddEditItemModal.css';
 
 /**
@@ -47,6 +48,11 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDetectingLabels, setIsDetectingLabels] = useState(false);  // AI detection in progress
   const [suggestedLabels, setSuggestedLabels] = useState<string[]>([]);  // AI-detected labels
+  const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);  // Recorded audio data URL
+  const [audioTranscription, setAudioTranscription] = useState('');  // Transcribed text
+  const [isRecording, setIsRecording] = useState(false);  // Currently recording
+  const [isTranscribing, setIsTranscribing] = useState(false);  // Transcribing audio
+  const audioRecorderRef = useRef<AudioRecorder | null>(null);  // Audio recorder instance
 
   /**
    * Track if we're in edit mode
@@ -65,6 +71,8 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
           setDescription(item.description || '');
           setLabels(item.labels.join(', '));  // Convert array to string
           setImageUrl(item.imageUrl);
+          setAudioUrl(item.audioUrl);
+          setAudioTranscription(item.audioTranscription || '');
         }
       });
     } else if (isOpen && !itemId) {
@@ -74,6 +82,9 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
       setLabels('');
       setImageUrl(undefined);
       setImageFile(null);
+      setAudioUrl(undefined);
+      setAudioTranscription('');
+      setSuggestedLabels([]);
     }
   }, [isOpen, itemId]);
 
@@ -118,6 +129,56 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
   };
 
   /**
+   * Start recording audio
+   */
+  const startRecording = async () => {
+    try {
+      if (!audioRecorderRef.current) {
+        audioRecorderRef.current = new AudioRecorder();
+      }
+      await audioRecorderRef.current.startRecording();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      alert('Failed to start recording. Please allow microphone access.');
+    }
+  };
+
+  /**
+   * Stop recording and transcribe audio
+   */
+  const stopRecording = async () => {
+    try {
+      if (!audioRecorderRef.current) return;
+
+      const dataUrl = await audioRecorderRef.current.stopRecording();
+      setAudioUrl(dataUrl);
+      setIsRecording(false);
+
+      // Transcribe audio using Speech-to-Text
+      setIsTranscribing(true);
+      const transcription = await transcribeAudio(dataUrl);
+      setAudioTranscription(transcription);
+      setIsTranscribing(false);
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+      setIsRecording(false);
+      setIsTranscribing(false);
+    }
+  };
+
+  /**
+   * Delete audio recording
+   */
+  const deleteAudio = () => {
+    setAudioUrl(undefined);
+    setAudioTranscription('');
+    if (audioRecorderRef.current) {
+      audioRecorderRef.current.cancelRecording();
+    }
+  };
+
+  /**
    * Handle form submission
    */
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,6 +210,8 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
             description: description.trim() || undefined,
             labels: labelsList,
             imageUrl: imageUrl,  // Include image
+            audioUrl: audioUrl,  // Include audio
+            audioTranscription: audioTranscription || undefined,  // Include transcription
           };
           await updateItem(updatedItem);
         }
@@ -163,6 +226,8 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
           createdAt: Date.now(),
           labels: labelsList,
           imageUrl: imageUrl,  // Include image
+          audioUrl: audioUrl,  // Include audio
+          audioTranscription: audioTranscription || undefined,  // Include transcription
         };
         await addItem(newItem);
       }
@@ -300,6 +365,78 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                     disabled={isLoading}
                   >
                     Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Voice Note section */}
+            <div className="form-group">
+              <label>Voice Note (optional)</label>
+
+              {/* Recording controls */}
+              {!audioUrl && (
+                <button
+                  type="button"
+                  className={isRecording ? "stop-recording-button" : "start-recording-button"}
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isLoading || isTranscribing}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: isRecording ? '#F44336' : '#2196F3',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    width: '100%',
+                    marginTop: '8px',
+                  }}
+                >
+                  {isRecording ? '⏹️ Stop Recording' : '🎤 Start Recording'}
+                </button>
+              )}
+
+              {/* Transcribing indicator */}
+              {isTranscribing && (
+                <small style={{ color: '#2196F3', marginTop: '8px', display: 'block' }}>
+                  🤖 Transcribing audio...
+                </small>
+              )}
+
+              {/* Audio player and transcription */}
+              {audioUrl && (
+                <div style={{ marginTop: '12px' }}>
+                  <audio controls src={audioUrl} style={{ width: '100%', marginBottom: '8px' }} />
+
+                  {audioTranscription && (
+                    <div style={{
+                      padding: '12px',
+                      background: '#F5F5F5',
+                      borderRadius: '8px',
+                      marginBottom: '8px',
+                    }}>
+                      <strong style={{ fontSize: '12px', color: '#666' }}>Transcription:</strong>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '14px' }}>{audioTranscription}</p>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={deleteAudio}
+                    disabled={isLoading}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#F44336',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Remove Audio
                   </button>
                 </div>
               )}

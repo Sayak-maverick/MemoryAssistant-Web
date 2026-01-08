@@ -52,6 +52,17 @@ export interface Item {
    * Array means it can have multiple labels
    */
   labels: string[];
+
+  /**
+   * Audio recording (voice note) stored as data URL
+   * Format: "data:audio/webm;base64,..."
+   */
+  audioUrl?: string;
+
+  /**
+   * Transcription of the audio note (from speech-to-text)
+   */
+  audioTranscription?: string;
 }
 
 /**
