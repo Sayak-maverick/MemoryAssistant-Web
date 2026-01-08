@@ -16,6 +16,7 @@
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { Item } from '../types/item.types';
+import { syncItemToCloud, deleteItemFromCloud } from '../services/firestoreService';
 
 /**
  * Define the database schema
@@ -168,6 +169,9 @@ export async function addItem(item: Item): Promise<void> {
    * This is like @Insert(onConflict = OnConflictStrategy.REPLACE) in Room
    */
   await db.put('items', item);
+
+  // Sync to cloud (Step 10: Cloud Sync)
+  await syncItemToCloud(item);
 }
 
 /**
@@ -206,6 +210,9 @@ export async function updateItem(item: Item): Promise<void> {
   const db = await getDB();
   // put() updates if ID exists, creates if not
   await db.put('items', item);
+
+  // Sync to cloud (Step 10: Cloud Sync)
+  await syncItemToCloud(item);
 }
 
 /**
@@ -218,6 +225,9 @@ export async function updateItem(item: Item): Promise<void> {
 export async function deleteItem(id: string): Promise<void> {
   const db = await getDB();
   await db.delete('items', id);
+
+  // Delete from cloud (Step 10: Cloud Sync)
+  await deleteItemFromCloud(id);
 }
 
 /**
