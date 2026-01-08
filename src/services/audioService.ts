@@ -135,11 +135,30 @@ export async function transcribeAudio(audioDataUrl: string): Promise<string> {
     }
 
     // Prepare the request for Speech-to-Text API
+    // Multi-language support: API will automatically detect the language
     const requestBody = {
       config: {
         encoding: 'WEBM_OPUS',  // Audio encoding format
         sampleRateHertz: 48000,  // Sample rate
-        languageCode: 'en-US',   // Language
+        languageCode: 'en-US',   // Primary language hint
+        // Alternative languages for automatic detection
+        alternativeLanguageCodes: [
+          'es-ES',  // Spanish (Spain)
+          'fr-FR',  // French (France)
+          'de-DE',  // German (Germany)
+          'it-IT',  // Italian (Italy)
+          'pt-BR',  // Portuguese (Brazil)
+          'zh-CN',  // Chinese (Simplified)
+          'ja-JP',  // Japanese
+          'ko-KR',  // Korean
+          'ar-SA',  // Arabic (Saudi Arabia)
+          'hi-IN',  // Hindi (India)
+          'ru-RU',  // Russian
+          'nl-NL',  // Dutch (Netherlands)
+          'pl-PL',  // Polish
+          'tr-TR',  // Turkish
+          'vi-VN',  // Vietnamese
+        ],
         enableAutomaticPunctuation: true,  // Add punctuation
       },
       audio: {
