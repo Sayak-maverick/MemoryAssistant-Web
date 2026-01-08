@@ -63,6 +63,24 @@ export interface Item {
    * Transcription of the audio note (from speech-to-text)
    */
   audioTranscription?: string;
+
+  /**
+   * GPS Location - Latitude coordinate
+   * Helps you remember where you last saw/used this item
+   */
+  latitude?: number;
+
+  /**
+   * GPS Location - Longitude coordinate
+   */
+  longitude?: number;
+
+  /**
+   * Human-readable location name
+   * e.g., "Home", "Office", "123 Main St, New York"
+   * This can be obtained from reverse geocoding
+   */
+  locationName?: string;
 }
 
 /**

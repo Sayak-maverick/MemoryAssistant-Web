@@ -15,6 +15,7 @@ import { Item } from '../../types/item.types';
 import { addItem, updateItem, deleteItem, getItemById } from '../../database/db';
 import { detectLabels, suggestItemName } from '../../services/visionService';
 import { AudioRecorder, transcribeAudio } from '../../services/audioService';
+import { getCurrentLocation, isGeolocationSupported } from '../../services/locationService';
 import './AddEditItemModal.css';
 
 /**
@@ -53,6 +54,10 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
   const [isRecording, setIsRecording] = useState(false);  // Currently recording
   const [isTranscribing, setIsTranscribing] = useState(false);  // Transcribing audio
   const audioRecorderRef = useRef<AudioRecorder | null>(null);  // Audio recorder instance
+  const [latitude, setLatitude] = useState<number | undefined>(undefined);  // GPS latitude
+  const [longitude, setLongitude] = useState<number | undefined>(undefined);  // GPS longitude
+  const [locationName, setLocationName] = useState<string | undefined>(undefined);  // Location address
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);  // Fetching location
 
   /**
    * Track if we're in edit mode
@@ -73,6 +78,9 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
           setImageUrl(item.imageUrl);
           setAudioUrl(item.audioUrl);
           setAudioTranscription(item.audioTranscription || '');
+          setLatitude(item.latitude);
+          setLongitude(item.longitude);
+          setLocationName(item.locationName);
         }
       });
     } else if (isOpen && !itemId) {
@@ -85,6 +93,9 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
       setAudioUrl(undefined);
       setAudioTranscription('');
       setSuggestedLabels([]);
+      setLatitude(undefined);
+      setLongitude(undefined);
+      setLocationName(undefined);
     }
   }, [isOpen, itemId]);
 
@@ -212,6 +223,9 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
             imageUrl: imageUrl,  // Include image
             audioUrl: audioUrl,  // Include audio
             audioTranscription: audioTranscription || undefined,  // Include transcription
+            latitude: latitude,  // Include GPS latitude
+            longitude: longitude,  // Include GPS longitude
+            locationName: locationName,  // Include location address
           };
           await updateItem(updatedItem);
         }
@@ -228,6 +242,9 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
           imageUrl: imageUrl,  // Include image
           audioUrl: audioUrl,  // Include audio
           audioTranscription: audioTranscription || undefined,  // Include transcription
+          latitude: latitude,  // Include GPS latitude
+          longitude: longitude,  // Include GPS longitude
+          locationName: locationName,  // Include location address
         };
         await addItem(newItem);
       }
@@ -439,6 +456,90 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                     Remove Audio
                   </button>
                 </div>
+              )}
+            </div>
+
+            {/* Location Section */}
+            <div className="form-section">
+              <label className="form-label">Location (optional)</label>
+
+              {/* Location fetching status */}
+              {isFetchingLocation && (
+                <p className="info-text" style={{ color: '#1976d2' }}>
+                  📍 Getting your location...
+                </p>
+              )}
+
+              {/* Location display or get location button */}
+              {latitude !== undefined && longitude !== undefined ? (
+                <div
+                  className="audio-player"
+                  style={{
+                    padding: '16px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '8px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 500 }}>
+                        {locationName || 'Location saved'}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>
+                        Lat: {latitude.toFixed(4)}, Lon: {longitude.toFixed(4)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLatitude(undefined);
+                        setLongitude(undefined);
+                        setLocationName(undefined);
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#d32f2f',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={async () => {
+                    // Check if geolocation is supported
+                    if (!isGeolocationSupported()) {
+                      alert('Geolocation is not supported by your browser');
+                      return;
+                    }
+
+                    setIsFetchingLocation(true);
+                    try {
+                      const locationData = await getCurrentLocation();
+                      setLatitude(locationData.latitude);
+                      setLongitude(locationData.longitude);
+                      setLocationName(locationData.locationName);
+                    } catch (error: any) {
+                      console.error('Location error:', error);
+                      alert(error.message || 'Failed to get location. Please allow location access.');
+                    } finally {
+                      setIsFetchingLocation(false);
+                    }
+                  }}
+                  disabled={isFetchingLocation}
+                  style={{ width: '100%' }}
+                >
+                  <span style={{ marginRight: '8px' }}>📍</span>
+                  Add Location
+                </button>
               )}
             </div>
 
