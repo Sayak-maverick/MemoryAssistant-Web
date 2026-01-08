@@ -13,6 +13,7 @@
 import React, { useState, useEffect } from 'react';
 import { Item } from '../../types/item.types';
 import { addItem, updateItem, deleteItem, getItemById } from '../../database/db';
+import { detectLabels, suggestItemName } from '../../services/visionService';
 import './AddEditItemModal.css';
 
 /**
@@ -44,6 +45,8 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
   const [imageFile, setImageFile] = useState<File | null>(null);  // Selected file
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDetectingLabels, setIsDetectingLabels] = useState(false);  // AI detection in progress
+  const [suggestedLabels, setSuggestedLabels] = useState<string[]>([]);  // AI-detected labels
 
   /**
    * Track if we're in edit mode
@@ -76,16 +79,39 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
 
   /**
    * Handle image file selection
+   * Now with AI object detection!
    */
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
 
       // Convert to data URL for preview
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageUrl(reader.result as string);
+      reader.onloadend = async () => {
+        const dataUrl = reader.result as string;
+        setImageUrl(dataUrl);
+
+        // Detect labels using Google Vision API
+        setIsDetectingLabels(true);
+        try {
+          const detectedLabels = await detectLabels(dataUrl);
+          setSuggestedLabels(detectedLabels);
+
+          // Auto-suggest item name if empty
+          if (!name && detectedLabels.length > 0) {
+            setName(suggestItemName(detectedLabels));
+          }
+
+          // Auto-fill labels if empty
+          if (!labels && detectedLabels.length > 0) {
+            setLabels(detectedLabels.join(', '));
+          }
+        } catch (error) {
+          console.error('Failed to detect labels:', error);
+        } finally {
+          setIsDetectingLabels(false);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -245,6 +271,21 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                 disabled={isLoading}
                 className="file-input"
               />
+
+              {/* AI Detection indicator */}
+              {isDetectingLabels && (
+                <small style={{ color: '#2196F3', marginTop: '8px', display: 'block' }}>
+                  🤖 AI is analyzing your image...
+                </small>
+              )}
+
+              {/* Suggested labels */}
+              {suggestedLabels.length > 0 && !isDetectingLabels && (
+                <small style={{ color: '#4CAF50', marginTop: '8px', display: 'block' }}>
+                  ✨ AI detected: {suggestedLabels.join(', ')}
+                </small>
+              )}
+
               {imageUrl && (
                 <div className="image-preview">
                   <img src={imageUrl} alt="Preview" />
@@ -254,6 +295,7 @@ const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                     onClick={() => {
                       setImageUrl(undefined);
                       setImageFile(null);
+                      setSuggestedLabels([]);
                     }}
                     disabled={isLoading}
                   >
